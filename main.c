@@ -15,10 +15,14 @@ unsigned short int numAleatorio(){
   return ((rand() % 3)+1);
 }
 
-void lerJogo(short int escolha, short int numJogo, char operacao){
+void listarTipos() {
+  puts("Opções:\n1 - Jogo Fácil\n2 - Jogo Médio\n3 - Jogo Difícil\n\n0 - Sair\n");
+}
+
+void lerJogo(FILE** arquivo, int escolha, int numJogo, char operacao[]){
   char caminhoJogo[100];
 
-  if (escolha) {
+  if (escolha == 1) {
     sprintf(caminhoJogo, "joojos/facil/%d.txt", numJogo);
   }
   else if (escolha == 2) {
@@ -28,31 +32,56 @@ void lerJogo(short int escolha, short int numJogo, char operacao){
     sprintf(caminhoJogo, "joojos/dificil/%d.txt", numJogo);
   }
 
-
-  FILE* arquivo = fopen(caminhoJogo, operacao);
-  fclose(arquivo);
+  *arquivo = fopen(caminhoJogo, operacao);
 }
 
 void removerJogo() {
-  return;
+  int escolhaTipo, escolhaJogo;
+  listarTipos();
+  scanf("%d", &escolhaTipo);
+
+  if (escolhaTipo != 0) {
+    puts("Insira o número do jogo que quer excluir:");
+    scanf("%d", &escolhaJogo);
+
+    FILE* arquivo;
+    lerJogo(&arquivo, escolhaTipo, escolhaJogo, "w");
+    fclose(arquivo);
+  }
+}
+
+void listarJogos() {
+  puts("\nJogos Fáceis: ");
+  system("ls joojos/facil");
+
+  puts("\nJogos Médios: ");
+  system("ls joojos/medio");
+
+  puts("\nJogos Difíceis: ");
+  system("ls joojos/dificil");
 }
 
 void jogoFacil(){
-  lerJogo(1, numAleatorio(), "r");
+  FILE* arquivo;
+  lerJogo(&arquivo, 1, numAleatorio(), "r");
+  fclose(arquivo);
 }
 
 void jogoMedio(){
-  lerJogo(2, numAleatorio(), "r");
+  FILE* arquivo;
+  lerJogo(arquivo, 2, numAleatorio(), "r");
+  fclose(arquivo);
 }
 
 void jogoDificil(){
-  lerJogo(3, numAleatorio(), "r");
+  FILE* arquivo;
+  lerJogo(arquivo, 3, numAleatorio(), "r");
+  fclose(arquivo);
 }
 
 void menuTipoJogo(){
   int escolha;
-  puts("Opções:\n1 - Jogo Fácil\n2 - Jogo Médio\n3 - Jogo Difícil\n\n0 - Sair\n");
-
+  listarTipos();
   scanf("%i", &escolha);
 
   switch (escolha) {
@@ -67,19 +96,19 @@ void menuTipoJogo(){
   }
 }
 
-void menu() {
+short int menu() {
   int escolha;
-  puts("Opções:\n1 - Inserir Jogo\n2 - Listar Jogos\n3 - Remover Jogo\n4 - Alterar Jogo Gravado\n5 - Buscar Jogo Gravado\n\n0 - Sair\n");
+  puts("\nOpções:\n1 - Inserir Jogo\n2 - Listar Jogos\n3 - Remover Jogo\n4 - Alterar Jogo Gravado\n5 - Buscar Jogo Gravado\n\n0 - Sair\n");
 
   scanf("%i", &escolha);
 
   switch (escolha) {
     case 0:
-      break;
+      return 0;
     case 1:
       break;
     case 2:
-      break;
+      listarJogos(); break;
     case 3:
       removerJogo(); break;
     case 4:
@@ -87,9 +116,16 @@ void menu() {
     case 5:
       break;
   }
+  return 1;
 }
 
 int main(int argc, char const *argv[]) {
-  menu();
+  short int retorno = 1;
+  while(1){
+    retorno = menu();
+    if (!retorno) {
+      break;
+    }
+  }
   return 0;
 }
