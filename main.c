@@ -6,13 +6,71 @@
 #include <string.h>
 
 typedef struct{
-  unsigned short int esolha;
+  unsigned short int sudoku[9][9];
+  unsigned short int solucao[9][9];
 }joojenho;
 
 unsigned short int numAleatorio(){
   time_t t;
   srand((unsigned) time(&t));
   return ((rand() % 3)+1);
+}
+
+void printarJogo(joojenho* sudosudo){
+  puts("   1  2  3    4  5  6    7  8  9");
+  for (size_t i = 0; i < 9; i++) {
+    printf("%c", (97+i));
+    for (size_t j = 0; j < 9; j++) {
+      printf(" %2d", sudosudo->sudoku[i][j]);
+      if (j == 2 || j == 5) {
+        printf(" |" );
+      }
+    }
+    puts("");
+    if (i == 2 || i == 5) {
+      puts("   --------+----------+---------");
+    }
+  }
+
+  puts("");
+}
+
+int verificaJogo(joojenho* sus){
+  for (size_t i = 0; i < 9; i++) {
+    for (size_t j = 0; j < 9; j++) {
+      if (sus->sudoku[i][j] == 0) {
+        return 0;
+      }
+    }
+  }
+  return 1;
+}
+
+void inserirJogo(){
+  joojenho sudosudo;
+  char linha;
+  int coluna, posicao;
+
+  coluna = posicao = linha = 0;
+
+  for (size_t i = 0; i < 9; i++) {
+    for (size_t j = 0; j < 9; j++) {
+      sudosudo.sudoku[i][j] = 0;
+    }
+  }
+
+  while (1) {
+    printarJogo(&sudosudo);
+
+    puts("Insira a letra da linha e o número da coluna e o número que deseja jogar");
+    scanf("%c %d %d", &linha, &coluna, &posicao);
+
+    sudosudo.sudoku[linha-97][coluna-1] = posicao;
+
+    if (verificaJogo(&sudosudo)) {
+      break;
+    }
+  }
 }
 
 void listarTipos() {
@@ -98,7 +156,7 @@ void menuTipoJogo(){
 
 short int menu() {
   int escolha;
-  puts("\nOpções:\n1 - Inserir Jogo\n2 - Listar Jogos\n3 - Remover Jogo\n4 - Alterar Jogo Gravado\n5 - Buscar Jogo Gravado\n\n0 - Sair\n");
+  puts("\nMenu:\n1 - Inserir Jogo\n2 - Listar Jogos\n3 - Remover Jogo\n4 - Alterar Jogo Gravado\n\n0 - Sair\n");
 
   scanf("%i", &escolha);
 
@@ -106,15 +164,15 @@ short int menu() {
     case 0:
       return 0;
     case 1:
-      break;
+      inserirJogo(); break;
     case 2:
       listarJogos(); break;
     case 3:
       removerJogo(); break;
     case 4:
       break;
-    case 5:
-      break;
+    default:
+      printf("Opção inválida\n"); break;
   }
   return 1;
 }
@@ -127,5 +185,6 @@ int main(int argc, char const *argv[]) {
       break;
     }
   }
+
   return 0;
 }
