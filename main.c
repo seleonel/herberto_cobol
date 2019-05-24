@@ -16,12 +16,29 @@ unsigned short int numAleatorio(){
   return ((rand() % 3)+1);
 }
 
+void verificaVitoria(joojenho* ponteiro) {
+  for (size_t i = 0; i < 9; i++) {
+    for (size_t j = 0; j < 9; j++) {
+      if (ponteiro->sudoku[i][j] != ponteiro->solucao[i][j]) {
+        puts("O jogo está incorreto! (errrou)");
+        return;
+      }
+    }
+  }
+  puts("O jogo está correto! (yaaaay)");
+}
+
 void printarJogo(joojenho* sudosudo){
   puts("   1  2  3    4  5  6    7  8  9");
   for (size_t i = 0; i < 9; i++) {
     printf("%c", (97+i));
     for (size_t j = 0; j < 9; j++) {
-      printf(" %2d", sudosudo->sudoku[i][j]);
+      if (!(sudosudo->sudoku[i][j])) {
+        printf("  ?");
+      }
+      else
+        printf(" %2d", sudosudo->sudoku[i][j]);
+
       if (j == 2 || j == 5) {
         printf(" |" );
       }
@@ -33,6 +50,43 @@ void printarJogo(joojenho* sudosudo){
   }
 
   puts("");
+}
+
+void gravarJogo(joojenho* ku){
+  char buffer[20];
+  char nomenho[20] = {0};
+  char nomenhoBin[30] = {0};
+
+  puts("Insira o nome do arquivo que desejas gravar\nMínimo 6 caracteres, máximo 14");
+  // scanf("%s", nomenho);
+  while ((strcmp(fgets(buffer, sizeof(buffer), stdin), "\n")))
+  {
+      scanf("%s", nomenho);
+  };
+
+
+  strcpy(nomenhoBin, nomenho);
+  strcat(nomenho, ".txt");
+  strcat(nomenhoBin, "Bin.txt");
+
+
+  FILE* jogoPraGravar = fopen(nomenho, "w");
+  FILE* jogoPraGravarBin = fopen(nomenhoBin, "wb");
+
+
+  fwrite(&ku->sudoku, sizeof(ku->sudoku[0][0]), sizeof(ku->sudoku), jogoPraGravarBin);
+
+  for (size_t i = 0; i < 9; i++) {
+    for (size_t j = 0; j < 9; j++) {
+      fprintf(jogoPraGravar, " %2d", ku->sudoku[i][j]);
+    }
+    if (i == 2 || i == 5) {
+      fprintf(jogoPraGravar, "\n");
+    }
+  }
+
+  fclose(jogoPraGravar);
+  fclose(jogoPraGravarBin);
 }
 
 int verificaJogo(joojenho* sus){
@@ -49,15 +103,12 @@ int verificaJogo(joojenho* sus){
 void inserirJogo(){
   joojenho sudosudo;
   char linha;
-  int coluna, posicao;
+  int coluna, posicao, escolha, gravar;
+
+  escolha = menuTipoJogo();
+  leitura(&sudosudo, escolha, numAleatorio());
 
   coluna = posicao = linha = 0;
-
-  for (size_t i = 0; i < 9; i++) {
-    for (size_t j = 0; j < 9; j++) {
-      sudosudo.sudoku[i][j] = 0;
-    }
-  }
 
   while (1) {
     printarJogo(&sudosudo);
@@ -68,6 +119,13 @@ void inserirJogo(){
     sudosudo.sudoku[linha-97][coluna-1] = posicao;
 
     if (verificaJogo(&sudosudo)) {
+      verificaVitoria(&sudosudo);
+      printf("Você deseja gravar o seu jogo?\n0 - Não\n1 - Sim\n");
+      scanf("%d", &gravar);
+
+      if (gravar) {
+        gravarJogo(&sudosudo);
+      }
       break;
     }
   }
@@ -119,46 +177,61 @@ void listarJogos() {
   system("ls joojos/dificil");
 }
 
-void jogoFacil(){
-  FILE* arquivo;
-  lerJogo(&arquivo, 1, numAleatorio(), "r");
-  fclose(arquivo);
+void leitura(joojenho* jooj, int tipo, int jogo){
+  char caminho[50];
+  char caminhoSolucao[50];
+
+  switch (tipo) {
+    case 1: sprintf(caminho, "joojos/facil/%d.txt", jogo);
+            sprintf(caminhoSolucao, "joojos/facil/solucao.txt");
+            break;
+    case 2: sprintf(caminho, "joojos/medio/%d.txt", jogo);
+            sprintf(caminhoSolucao, "joojos/medio/solucao.txt");
+            break;
+    case 3: sprintf(caminho, "joojos/dificil/%d.txt", jogo);
+            sprintf(caminhoSolucao, "joojos/dificil/solucao.txt");
+            break;
+  }
+
+
+  FILE* arquivoLeitura = fopen(caminho, "r");
+  if(!arquivoLeitura)
+    puts("erro");
+  const char del[] = " ";
+  char buffer[40];
+  for(int i = 0; fgets(buffer, 40, arquivoLeitura); i++){
+   char * ponteiro_str = strtok(buffer, del);
+    for(int j = 0; ponteiro_str; ponteiro_str = strtok(NULL, del), j++){
+       jooj->sudoku[i][j] = strtol(ponteiro_str,NULL, 10);
+      }
+    }
+  fclose(arquivoLeitura);
+
+  arquivoLeitura = fopen(caminhoSolucao, "r");
+  if(!arquivoLeitura)
+    puts("erro");
+  for(int i = 0; fgets(buffer, 40, arquivoLeitura); i++){
+   char * ponteiro_str = strtok(buffer, del);
+    for(int j = 0; ponteiro_str; ponteiro_str = strtok(NULL, del), j++){
+       jooj->solucao[i][j] = strtol(ponteiro_str,NULL, 10);
+      }
+    }
+  fclose(arquivoLeitura);
 }
 
-void jogoMedio(){
-  FILE* arquivo;
-  lerJogo(arquivo, 2, numAleatorio(), "r");
-  fclose(arquivo);
-}
-
-void jogoDificil(){
-  FILE* arquivo;
-  lerJogo(arquivo, 3, numAleatorio(), "r");
-  fclose(arquivo);
-}
-
-void menuTipoJogo(){
+int menuTipoJogo(){
   int escolha;
   listarTipos();
   scanf("%i", &escolha);
 
-  switch (escolha) {
-    case 0:
-      break;
-    case 1:
-      jogoFacil(); break;
-    case 2:
-      jogoMedio(); break;
-    case 3:
-      jogoDificil(); break;
-  }
+  return escolha;
 }
 
 short int menu() {
   int escolha;
   puts("\nMenu:\n1 - Inserir Jogo\n2 - Listar Jogos\n3 - Remover Jogo\n4 - Alterar Jogo Gravado\n\n0 - Sair\n");
 
-  scanf("%i", &escolha);
+  scanf("%d", &escolha);
 
   switch (escolha) {
     case 0:
@@ -179,11 +252,8 @@ short int menu() {
 
 int main(int argc, char const *argv[]) {
   short int retorno = 1;
-  while(1){
+  while(retorno){
     retorno = menu();
-    if (!retorno) {
-      break;
-    }
   }
 
   return 0;
