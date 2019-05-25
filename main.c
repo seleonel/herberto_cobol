@@ -4,9 +4,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
+#define TAM_KU 9
 
 typedef struct{
-  unsigned short int sudoku[9][9];
+  unsigned short int **sudoku;
   unsigned short int solucao[9][9];
 }joojenho;
 
@@ -52,41 +54,44 @@ void printarJogo(joojenho* sudosudo){
   puts("");
 }
 
-void gravarJogo(joojenho* ku){
-  char buffer[20];
-  char nomenho[20] = {0};
-  char nomenhoBin[30] = {0};
+void gravarJogo(joojenho* ku, int dificuldade){
+  char nomenho[40] = {0};
+  char caminhoTexto[80] = {0};
+  char caminhoBin[80] = {0};
+  char pasta[30] = "joojos/usuario/";
 
-  puts("Insira o nome do arquivo que desejas gravar\nMínimo 6 caracteres, máximo 14");
-  // scanf("%s", nomenho);
-  while ((strcmp(fgets(buffer, sizeof(buffer), stdin), "\n")))
-  {
-      scanf("%s", nomenho);
-  };
+  switch (dificuldade) {
+    case 1: strcat(pasta, "facil/"); break;
+    case 2: strcat(pasta, "medio/"); break;
+    case 3: strcat(pasta, "dificil/"); break;
+  }
 
+  puts("\nInsira o nome do arquivo que desejas gravar\nMínimo 6 caracteres, máximo 14");
+  scanf(" %s", nomenho);
 
-  strcpy(nomenhoBin, nomenho);
-  strcat(nomenho, ".txt");
-  strcat(nomenhoBin, "Bin.txt");
+  strcpy(caminhoTexto, pasta);
+  strcpy(caminhoBin, pasta);
+  strcat(caminhoTexto, nomenho);
+  strcat(caminhoBin, nomenho);
+  strcat(caminhoTexto, ".txt");
+  strcat(caminhoBin, ".bin");
 
-
-  FILE* jogoPraGravar = fopen(nomenho, "w");
-  FILE* jogoPraGravarBin = fopen(nomenhoBin, "wb");
-
+  FILE* jogoPraGravar = fopen(caminhoTexto, "w");
+  FILE* jogoPraGravarBin = fopen(caminhoBin, "wb");
 
   fwrite(&ku->sudoku, sizeof(ku->sudoku[0][0]), sizeof(ku->sudoku), jogoPraGravarBin);
 
   for (size_t i = 0; i < 9; i++) {
     for (size_t j = 0; j < 9; j++) {
-      fprintf(jogoPraGravar, " %2d", ku->sudoku[i][j]);
+      fprintf(jogoPraGravar, "%d ", ku->sudoku[i][j]);    
     }
-    if (i == 2 || i == 5) {
-      fprintf(jogoPraGravar, "\n");
-    }
+    fprintf(jogoPraGravar, "\n");
   }
 
   fclose(jogoPraGravar);
   fclose(jogoPraGravarBin);
+
+  puts("\nJogo gravado com sucesso!\n");
 }
 
 int verificaJogo(joojenho* sus){
@@ -100,81 +105,12 @@ int verificaJogo(joojenho* sus){
   return 1;
 }
 
-void inserirJogo(){
-  joojenho sudosudo;
-  char linha;
-  int coluna, posicao, escolha, gravar;
+void jogarFora(joojenho * sua_waifu)
+{
+  for(int i = 0; i < TAM_KU; i++)
+    free(sua_waifu->sudoku[i]);
+  free(sua_waifu->sudoku);
 
-  escolha = menuTipoJogo();
-  leitura(&sudosudo, escolha, numAleatorio());
-
-  coluna = posicao = linha = 0;
-
-  while (1) {
-    printarJogo(&sudosudo);
-
-    puts("Insira a letra da linha e o número da coluna e o número que deseja jogar");
-    scanf("%c %d %d", &linha, &coluna, &posicao);
-
-    sudosudo.sudoku[linha-97][coluna-1] = posicao;
-
-    if (verificaJogo(&sudosudo)) {
-      verificaVitoria(&sudosudo);
-      printf("Você deseja gravar o seu jogo?\n0 - Não\n1 - Sim\n");
-      scanf("%d", &gravar);
-
-      if (gravar) {
-        gravarJogo(&sudosudo);
-      }
-      break;
-    }
-  }
-}
-
-void listarTipos() {
-  puts("Opções:\n1 - Jogo Fácil\n2 - Jogo Médio\n3 - Jogo Difícil\n\n0 - Sair\n");
-}
-
-void lerJogo(FILE** arquivo, int escolha, int numJogo, char operacao[]){
-  char caminhoJogo[100];
-
-  if (escolha == 1) {
-    sprintf(caminhoJogo, "joojos/facil/%d.txt", numJogo);
-  }
-  else if (escolha == 2) {
-    sprintf(caminhoJogo, "joojos/medio/%d.txt", numJogo);
-  }
-  else{
-    sprintf(caminhoJogo, "joojos/dificil/%d.txt", numJogo);
-  }
-
-  *arquivo = fopen(caminhoJogo, operacao);
-}
-
-void removerJogo() {
-  int escolhaTipo, escolhaJogo;
-  listarTipos();
-  scanf("%d", &escolhaTipo);
-
-  if (escolhaTipo != 0) {
-    puts("Insira o número do jogo que quer excluir:");
-    scanf("%d", &escolhaJogo);
-
-    FILE* arquivo;
-    lerJogo(&arquivo, escolhaTipo, escolhaJogo, "w");
-    fclose(arquivo);
-  }
-}
-
-void listarJogos() {
-  puts("\nJogos Fáceis: ");
-  system("ls joojos/facil");
-
-  puts("\nJogos Médios: ");
-  system("ls joojos/medio");
-
-  puts("\nJogos Difíceis: ");
-  system("ls joojos/dificil");
 }
 
 void leitura(joojenho* jooj, int tipo, int jogo){
@@ -192,7 +128,6 @@ void leitura(joojenho* jooj, int tipo, int jogo){
             sprintf(caminhoSolucao, "joojos/dificil/solucao.txt");
             break;
   }
-
 
   FILE* arquivoLeitura = fopen(caminho, "r");
   if(!arquivoLeitura)
@@ -219,18 +154,101 @@ void leitura(joojenho* jooj, int tipo, int jogo){
   fclose(arquivoLeitura);
 }
 
+void listarTipos() {
+  puts("Opções:\n1 - Jogo Fácil\n2 - Jogo Médio\n3 - Jogo Difícil\n\n0 - Sair\n");
+}
+
 int menuTipoJogo(){
   int escolha;
   listarTipos();
-  scanf("%i", &escolha);
+  scanf("%d", &escolha);
 
   return escolha;
+}
+
+void inserirJogo(){
+  joojenho sudosudo;
+  char linha;
+  int coluna, posicao, escolha, gravar;
+
+  coluna = posicao = linha = 0;
+
+  sudosudo.sudoku = malloc(sizeof(unsigned short int*) * TAM_KU);
+  for(int i = 0; i < TAM_KU; i++)
+    sudosudo.sudoku[i] = malloc(sizeof(unsigned short int) * TAM_KU);
+
+  escolha = menuTipoJogo();
+  leitura(&sudosudo, escolha, numAleatorio());
+
+  while (1) {
+    printarJogo(&sudosudo);
+
+    puts("Insira a letra da linha e o número da coluna e o número que deseja jogar (insira \"0 0 0\" para sair)");
+    scanf(" %c %d %d", &linha, &coluna, &posicao);
+
+    if (linha == 48 && coluna == 0 && posicao == 0)
+      break;
+
+    sudosudo.sudoku[linha-97][coluna-1] = posicao;
+
+    if (verificaJogo(&sudosudo)) {
+      verificaVitoria(&sudosudo);
+      break;
+    }
+  }
+  printf("Você deseja gravar o seu jogo?\n0 - Não\n1 - Sim\n");
+  scanf("%d", &gravar);
+
+  if (gravar) {
+    gravarJogo(&sudosudo, escolha);
+  }
+  jogarFora(&sudosudo);
+}
+
+void removerJogo() {
+  int escolhaTipo;
+  char escolhaJogo[50], caminhoBin[80];
+  char caminhoTexto[80] = "rm joojos/usuario/";
+
+  listarTipos();
+  scanf("%d", &escolhaTipo);
+
+  if (escolhaTipo != 0) {
+    puts("Insira o nome do jogo que deseja excluir (sem a extensão, pois já excluirá o texto e o binário):");
+    scanf(" %s", escolhaJogo);
+
+    switch (escolhaTipo) {
+      case 1:
+        strcat(caminhoTexto, "facil/"); break;
+      case 2:
+        strcat(caminhoTexto, "medio/"); break;
+      case 3:
+        strcat(caminhoTexto, "dificil/"); break;
+    }
+    strcat(caminhoTexto, escolhaJogo);
+    strcpy(caminhoBin, caminhoTexto);
+    strcat(caminhoTexto, ".txt");
+    strcat(caminhoBin, ".bin");
+
+    system(caminhoTexto);
+    system(caminhoBin);
+  }
+}
+
+void listarJogos() {
+  puts("\nJogos Fáceis: ");
+  system("ls joojos/usuario/facil");
+
+  puts("\nJogos Médios: ");
+  system("ls joojos/usuario/medio");
+
+  puts("\nJogos Difíceis: ");
+  system("ls joojos/usuario/dificil");
 }
 
 short int menu() {
   int escolha;
   puts("\nMenu:\n1 - Inserir Jogo\n2 - Listar Jogos\n3 - Remover Jogo\n4 - Alterar Jogo Gravado\n\n0 - Sair\n");
-
   scanf("%d", &escolha);
 
   switch (escolha) {
